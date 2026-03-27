@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "createdAt"]
+    },
+    "Pet": {
+      "title": "Pet",
+      "description": "Pet listing information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "species": { "type": "string", "enum": ["Dog", "Cat", "Bird", "Fish", "Rabbit", "Other"] },
+        "breed": { "type": "string" },
+        "age": { "type": "string" },
+        "price": { "type": "number" },
+        "description": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "sellerId": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "sellerEmail": { "type": "string" },
+        "sellerPhone": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "type": "string", "enum": ["available", "sold"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "species", "breed", "age", "price", "description", "images", "sellerId", "sellerName", "sellerEmail", "location", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/pets/{petId}": {
+      "schema": "Pet",
+      "description": "Pet listings"
+    }
+  }
+}
