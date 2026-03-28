@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { PawPrint, Search, PlusCircle, User, LogOut, Menu, X, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
@@ -9,6 +9,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -16,6 +17,11 @@ export default function Navbar() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Hide navbar on login page if not authenticated
+  if (location.pathname === '/login' && !user) {
+    return null;
+  }
 
   const handleSignOut = async () => {
     try {

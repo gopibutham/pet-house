@@ -46,7 +46,7 @@ service cloud.firestore {
 
     // Pet listings
     match /pets/{petId} {
-      allow read: if true; // Publicly readable
+      allow read: if isAuthenticated(); // Restricted to authenticated users
       allow create: if isAuthenticated() && isValidPet(request.resource.data);
       allow update: if isAdmin() || (isAuthenticated() && 
                        request.auth.uid == resource.data.sellerId && 

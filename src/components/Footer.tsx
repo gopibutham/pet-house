@@ -1,7 +1,24 @@
 import { PawPrint, Mail, Phone, MapPin, Facebook, Twitter, Instagram } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { auth } from '../firebase';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
 export default function Footer() {
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Hide footer on login page if not authenticated
+  if (location.pathname === '/login' && !user) {
+    return null;
+  }
   return (
     <footer className="bg-gray-900 text-gray-300 pt-16 pb-8 border-t border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

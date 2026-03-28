@@ -9,26 +9,29 @@ import SellPet from './pages/SellPet';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
+import AuthGuard from './components/AuthGuard';
 
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-white flex flex-col font-sans selection:bg-orange-100 selection:text-orange-900">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/browse" element={<Browse />} />
-            <Route path="/pet/:id" element={<PetDetail />} />
-            <Route path="/sell" element={<SellPet />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-          </Routes>
-        </main>
-        <Footer />
-        <Toaster position="top-center" richColors />
-      </div>
+      <AuthGuard>
+        <div className="min-h-screen bg-white flex flex-col font-sans selection:bg-orange-100 selection:text-orange-900">
+          <Navbar />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/browse" element={<Browse />} />
+              <Route path="/pet/:id" element={<PetDetail />} />
+              <Route path="/sell" element={<SellPet />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Routes>
+          </main>
+          <Footer />
+          <Toaster position="top-center" richColors />
+        </div>
+      </AuthGuard>
     </Router>
   );
 }
