@@ -23,6 +23,7 @@ export default function Login() {
           email: user.email,
           displayName: user.displayName || 'Anonymous',
           photoURL: user.photoURL || '',
+          role: user.email === 'gopibutham@gmail.com' ? 'admin' : 'user',
           createdAt: new Date().toISOString(),
         });
       }

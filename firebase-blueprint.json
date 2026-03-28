@@ -10,9 +10,10 @@
         "displayName": { "type": "string" },
         "photoURL": { "type": "string" },
         "phoneNumber": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["uid", "email", "displayName", "createdAt"]
+      "required": ["uid", "email", "displayName", "role", "createdAt"]
     },
     "Pet": {
       "title": "Pet",
