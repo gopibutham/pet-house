@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { PawPrint, Search, PlusCircle, User, LogOut, Menu, X } from 'lucide-react';
+import { PawPrint, Search, PlusCircle, User, LogOut, Menu, X, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { auth } from '../firebase';
@@ -59,6 +59,12 @@ export default function Navbar() {
             
             {user ? (
               <div className="flex items-center gap-4 pl-4 border-l border-gray-100">
+                {user.email === 'gopibutham@gmail.com' && (
+                  <Link to="/admin" className="flex items-center gap-2 text-sm font-black text-orange-600 uppercase tracking-widest">
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </Link>
+                )}
                 <Link to="/profile" className="flex items-center gap-2 text-sm font-medium text-gray-900">
                   <User className="w-4 h-4" />
                   Profile
@@ -109,6 +115,16 @@ export default function Navbar() {
           <div className="pt-4 border-t border-gray-100">
             {user ? (
               <>
+                {user.email === 'gopibutham@gmail.com' && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-base font-black text-orange-600 uppercase tracking-widest hover:bg-orange-50 rounded-xl"
+                  >
+                    <Shield className="w-5 h-5" />
+                    Admin Panel
+                  </Link>
+                )}
                 <Link
                   to="/profile"
                   onClick={() => setIsOpen(false)}

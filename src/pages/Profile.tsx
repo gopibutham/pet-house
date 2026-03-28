@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { MOCK_PETS } from '../lib/mockData';
 import PetCard from '../components/PetCard';
-import { User, Mail, Phone, MapPin, Settings, PlusCircle, LogOut, Heart, Package, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Settings, PlusCircle, LogOut, Heart, Package, Loader2, Shield } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 import { Pet } from '../types';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 import { signOut } from 'firebase/auth';
@@ -13,6 +13,7 @@ import { signOut } from 'firebase/auth';
 export default function Profile() {
   const [listings, setListings] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>('user');
   const navigate = useNavigate();
   const user = auth.currentUser;
 
@@ -21,6 +22,19 @@ export default function Profile() {
       navigate('/login');
       return;
     }
+
+    // Fetch user role
+    const fetchUserRole = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserRole(userDoc.data().role || 'user');
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      }
+    };
+    fetchUserRole();
 
     const q = query(
       collection(db, 'pets'),
@@ -74,7 +88,15 @@ export default function Profile() {
           </div>
           <div className="flex-grow text-center md:text-left space-y-4">
             <div className="space-y-1">
-              <h1 className="text-4xl font-black tracking-tight">{profileData.displayName}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-4xl font-black tracking-tight">{profileData.displayName}</h1>
+                {userRole === 'admin' && (
+                  <span className="bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1 shadow-lg shadow-orange-500/20">
+                    <Shield className="w-3 h-3" />
+                    Admin
+                  </span>
+                )}
+              </div>
               <p className="text-orange-400 font-bold flex items-center justify-center md:justify-start gap-2">
                 <Settings className="w-4 h-4" />
                 Member since {profileData.memberSince}

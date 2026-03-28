@@ -8,6 +8,7 @@ import PetDetail from './pages/PetDetail';
 import SellPet from './pages/SellPet';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
+import AdminDashboard from './pages/AdminDashboard';
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
             <Route path="/sell" element={<SellPet />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </main>
         <Footer />
