@@ -27,12 +27,14 @@ service cloud.firestore {
     }
     
     function isValidPet(data) {
-      return data.keys().hasAll(['id', 'name', 'species', 'breed', 'age', 'price', 'description', 'images', 'sellerId', 'sellerName', 'sellerEmail', 'location', 'status', 'createdAt', 'updatedAt']) &&
+      let requiredFields = ['id', 'name', 'species', 'breed', 'age', 'price', 'description', 'images', 'sellerId', 'sellerName', 'sellerEmail', 'location', 'status', 'createdAt', 'updatedAt'];
+      return data.keys().hasAll(requiredFields) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.species in ['Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Other'] &&
              data.price is number && data.price >= 0 &&
              data.images is list && data.images.size() > 0 &&
-             data.sellerId == request.auth.uid;
+             data.sellerId == request.auth.uid &&
+             (!('isOfficial' in data) || (data.isOfficial is bool && (data.isOfficial == false || isAdmin())));
     }
 
     // User profiles

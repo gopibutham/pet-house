@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Filter, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, ChevronDown, X, ShieldCheck } from 'lucide-react';
 import PetCard from '../components/PetCard';
 import { Pet, PetSpecies } from '../types';
 import { cn } from '../lib/utils';
@@ -7,16 +7,27 @@ import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
+import { useSearchParams } from 'react-router-dom';
 
 const SPECIES: PetSpecies[] = ['Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Other'];
 
 export default function Browse() {
+  const [searchParams] = useSearchParams();
+  const initialType = searchParams.get('type') === 'official' ? 'Official' : 'All';
+
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecies, setSelectedSpecies] = useState<PetSpecies | 'All'>('All');
+  const [selectedType, setSelectedType] = useState<'All' | 'Official' | 'Community'>(initialType);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('type') === 'official') {
+      setSelectedType('Official');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const q = query(collection(db, 'pets'), orderBy('createdAt', 'desc'));
@@ -42,10 +53,13 @@ export default function Browse() {
                           pet.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesSpecies = selectedSpecies === 'All' || pet.species === selectedSpecies;
       const matchesPrice = pet.price >= priceRange[0] && pet.price <= priceRange[1];
+      const matchesType = selectedType === 'All' || 
+                         (selectedType === 'Official' && pet.isOfficial) || 
+                         (selectedType === 'Community' && !pet.isOfficial);
       
-      return matchesSearch && matchesSpecies && matchesPrice;
+      return matchesSearch && matchesSpecies && matchesPrice && matchesType;
     });
-  }, [pets, searchQuery, selectedSpecies, priceRange]);
+  }, [pets, searchQuery, selectedSpecies, priceRange, selectedType]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
@@ -69,7 +83,54 @@ export default function Browse() {
       </div>
 
       {/* Filters Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-6 pb-8 border-b border-gray-100">
+      <div className="flex flex-col gap-8 pb-8 border-b border-gray-100">
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => setSelectedType('All')}
+              className={cn(
+                "px-6 py-2.5 rounded-full text-sm font-black uppercase tracking-widest transition-all active:scale-95",
+                selectedType === 'All' 
+                  ? "bg-gray-900 text-white shadow-lg" 
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              )}
+            >
+              All Listings
+            </button>
+            <button
+              onClick={() => setSelectedType('Official')}
+              className={cn(
+                "px-6 py-2.5 rounded-full text-sm font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2",
+                selectedType === 'Official' 
+                  ? "bg-orange-500 text-white shadow-lg shadow-orange-200" 
+                  : "bg-orange-50 text-orange-600 hover:bg-orange-100"
+              )}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              PetConnect Exclusives
+            </button>
+            <button
+              onClick={() => setSelectedType('Community')}
+              className={cn(
+                "px-6 py-2.5 rounded-full text-sm font-black uppercase tracking-widest transition-all active:scale-95",
+                selectedType === 'Community' 
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
+                  : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+              )}
+            >
+              Community Listings
+            </button>
+          </div>
+
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 rounded-full text-sm font-bold text-gray-700 hover:border-orange-500 hover:text-orange-500 transition-all active:scale-95"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Advanced Filters
+          </button>
+        </div>
+
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => setSelectedSpecies('All')}
@@ -80,7 +141,7 @@ export default function Browse() {
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             )}
           >
-            All Pets
+            All Species
           </button>
           {SPECIES.map((species) => (
             <button
@@ -97,14 +158,6 @@ export default function Browse() {
             </button>
           ))}
         </div>
-
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 rounded-full text-sm font-bold text-gray-700 hover:border-orange-500 hover:text-orange-500 transition-all active:scale-95"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-        </button>
       </div>
 
       {/* Advanced Filters Panel */}

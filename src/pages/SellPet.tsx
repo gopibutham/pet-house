@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { PawPrint, Upload, DollarSign, MapPin, Info, CheckCircle2, AlertCircle } from 'lucide-react';
+import { PawPrint, Upload, DollarSign, MapPin, Info, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { PetSpecies } from '../types';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { auth, db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 
@@ -20,6 +20,7 @@ const petSchema = z.object({
   price: z.number().min(0, 'Price must be positive'),
   location: z.string().min(2, 'Location is required'),
   description: z.string().min(20, 'Description must be at least 20 characters'),
+  isOfficial: z.boolean().optional(),
 });
 
 type PetFormValues = z.infer<typeof petSchema>;
@@ -29,19 +30,42 @@ const SPECIES: PetSpecies[] = ['Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Other'];
 export default function SellPet() {
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (auth.currentUser) {
+        // Simple check for the hardcoded admin email
+        if (auth.currentUser.email === 'gopibutham@gmail.com') {
+          setIsAdmin(true);
+          return;
+        }
+        // Check database role
+        const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+        if (userDoc.exists() && userDoc.data().role === 'admin') {
+          setIsAdmin(true);
+        }
+      }
+    };
+    checkAdmin();
+  }, []);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<PetFormValues>({
     resolver: zodResolver(petSchema),
     defaultValues: {
       price: 0,
+      isOfficial: false,
     }
   });
+
+  const isOfficialChecked = watch('isOfficial');
 
   const onSubmit = async (data: PetFormValues) => {
     if (!auth.currentUser) {
@@ -64,7 +88,8 @@ export default function SellPet() {
         sellerName: auth.currentUser.displayName || 'Anonymous',
         sellerEmail: auth.currentUser.email || '',
         status: 'available',
-        createdAt: new Date().toISOString(), // Using ISO string for now, or serverTimestamp if schema allows
+        isOfficial: isAdmin ? data.isOfficial : false,
+        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
@@ -236,6 +261,24 @@ export default function SellPet() {
           />
           {errors.description && <p className="text-xs font-bold text-red-500">{errors.description.message}</p>}
         </div>
+
+        {isAdmin && (
+          <div className="p-6 bg-orange-50 rounded-3xl border-2 border-orange-100 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="bg-orange-500 p-3 rounded-2xl">
+                <ShieldCheck className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h4 className="font-black text-gray-900">PetConnect Exclusive</h4>
+                <p className="text-sm text-gray-500">Mark this as an official platform listing.</p>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" {...register('isOfficial')} className="sr-only peer" />
+              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
+            </label>
+          </div>
+        )}
 
         <button
           type="submit"

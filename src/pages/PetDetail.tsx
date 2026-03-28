@@ -111,6 +111,12 @@ export default function PetDetail() {
               <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">
                 {pet.breed}
               </span>
+              {pet.isOfficial && (
+                <span className="bg-orange-500 text-white px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4" />
+                  PetConnect Exclusive
+                </span>
+              )}
             </div>
             <div className="flex justify-between items-start">
               <h1 className="text-5xl md:text-6xl font-black text-gray-900 tracking-tight">{pet.name}</h1>

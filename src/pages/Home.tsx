@@ -11,6 +11,7 @@ import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 
 export default function Home() {
   const [pets, setPets] = useState<Pet[]>([]);
+  const [officialPets, setOfficialPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export default function Home() {
         ...doc.data()
       })) as Pet[];
       setPets(petsData);
+      setOfficialPets(petsData.filter(p => p.isOfficial));
       setLoading(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'pets');
@@ -142,6 +144,34 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* PetConnect Exclusives Section */}
+      {officialPets.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-12">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-orange-600 font-black uppercase tracking-widest text-sm">
+                <ShieldCheck className="w-5 h-5" />
+                PetConnect Exclusives
+              </div>
+              <h2 className="text-4xl font-black text-gray-900 tracking-tight">Our Own Pets</h2>
+              <p className="text-gray-500 font-medium">Hand-picked companions directly from our trusted network.</p>
+            </div>
+            <Link
+              to="/browse?type=official"
+              className="text-orange-600 font-bold flex items-center gap-2 hover:gap-3 transition-all group"
+            >
+              View All <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {officialPets.map((pet) => (
+              <PetCard key={pet.id} pet={pet} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured Pets Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

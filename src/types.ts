@@ -22,6 +22,7 @@ export interface Pet {
   sellerPhone?: string;
   location: string;
   status: 'available' | 'sold';
+  isOfficial?: boolean;
   createdAt: string;
   updatedAt: string;
 }

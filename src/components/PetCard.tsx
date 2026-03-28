@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Calendar, DollarSign, Heart } from 'lucide-react';
+import { MapPin, Calendar, DollarSign, Heart, ShieldCheck } from 'lucide-react';
 import { Pet } from '../types';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
@@ -15,7 +15,10 @@ const PetCard: React.FC<PetCardProps> = ({ pet }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
-      className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group"
+      className={cn(
+        "bg-white rounded-3xl overflow-hidden border transition-all duration-300 group",
+        pet.isOfficial ? "border-orange-200 shadow-orange-100 shadow-lg" : "border-gray-100 shadow-sm hover:shadow-xl"
+      )}
     >
       <Link to={`/pet/${pet.id}`} className="block relative aspect-[4/3] overflow-hidden">
         <img
@@ -24,10 +27,16 @@ const PetCard: React.FC<PetCardProps> = ({ pet }) => {
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute top-4 left-4">
-          <span className="bg-white/90 backdrop-blur-sm text-orange-600 px-3 py-1 rounded-full text-xs font-bold shadow-sm uppercase tracking-wider">
+        <div className="absolute top-4 left-4 flex flex-col gap-2">
+          <span className="bg-white/90 backdrop-blur-sm text-orange-600 px-3 py-1 rounded-full text-[10px] font-black shadow-sm uppercase tracking-widest">
             {pet.species}
           </span>
+          {pet.isOfficial && (
+            <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-sm uppercase tracking-widest flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3" />
+              Official
+            </span>
+          )}
         </div>
         <button 
           className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-red-500 transition-all duration-300 border border-white/30"
