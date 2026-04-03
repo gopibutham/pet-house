@@ -110,9 +110,21 @@ export default function SellPet() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      // For demo purposes, we'll just use placeholder images
-      const newImages = Array.from(files).map((_, i) => `https://picsum.photos/seed/pet-${Date.now()}-${i}/800/600`);
-      setImages([...images, ...newImages]);
+      const fileList = Array.from(files);
+      
+      fileList.forEach(file => {
+        if (file.size > 500 * 1024) { // 500KB limit per image for Firestore safety
+          toast.error(`${file.name} is too large. Please upload images smaller than 500KB.`);
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          setImages(prev => [...prev, base64String].slice(0, 4));
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
