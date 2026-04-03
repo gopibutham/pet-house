@@ -1,12 +1,13 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, DollarSign, Heart, Share2, Mail, Phone, ChevronLeft, ShieldCheck, Info, Loader2, Box } from 'lucide-react';
+import { MapPin, Calendar, DollarSign, Heart, Share2, Mail, Phone, ChevronLeft, ShieldCheck, Info, Loader2, Box, ShoppingBag } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
-import { db } from '../firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { Pet } from '../types';
+import { auth, db } from '../firebase';
+import { doc, onSnapshot, addDoc, collection, updateDoc } from 'firebase/firestore';
+import { Pet, Order } from '../types';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
+import { toast } from 'sonner';
 
 export default function PetDetail() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ export default function PetDetail() {
   const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -31,6 +33,52 @@ export default function PetDetail() {
 
     return () => unsubscribe();
   }, [id]);
+
+  const handlePurchase = async () => {
+    if (!auth.currentUser) {
+      toast.error('Please sign in to purchase a pet');
+      navigate('/login');
+      return;
+    }
+
+    if (!pet || (pet.isOfficial && pet.stockCount === 0)) {
+      toast.error('This pet is currently out of stock');
+      return;
+    }
+
+    setIsPurchasing(true);
+    try {
+      // 1. Create the order
+      const orderData: Omit<Order, 'id'> = {
+        petId: pet.id,
+        petName: pet.name,
+        petImage: pet.images[0],
+        buyerId: auth.currentUser.uid,
+        buyerName: auth.currentUser.displayName || 'Anonymous',
+        buyerEmail: auth.currentUser.email || '',
+        price: pet.price,
+        status: 'completed',
+        createdAt: new Date().toISOString(),
+      };
+
+      await addDoc(collection(db, 'orders'), orderData);
+
+      // 2. Decrement stock if official
+      if (pet.isOfficial && pet.stockCount !== undefined) {
+        await updateDoc(doc(db, 'pets', pet.id), {
+          stockCount: Math.max(0, pet.stockCount - 1),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      toast.success(`Congratulations! You have successfully purchased ${pet.name}!`);
+      navigate('/my-orders');
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'orders');
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -153,33 +201,58 @@ export default function PetDetail() {
           </div>
 
           {pet.isOfficial && pet.stockCount !== undefined && (
-            <div className={cn(
-              "p-6 rounded-3xl border flex items-center justify-between",
-              pet.stockCount > 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"
-            )}>
-              <div className="flex items-center gap-4">
-                <div className={cn(
-                  "p-3 rounded-2xl",
-                  pet.stockCount > 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"
-                )}>
-                  <Box className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Availability</p>
-                  <p className={cn(
-                    "text-xl font-black",
-                    pet.stockCount > 0 ? "text-green-700" : "text-red-700"
+            <div className="space-y-4">
+              <div className={cn(
+                "p-6 rounded-3xl border flex items-center justify-between",
+                pet.stockCount > 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"
+              )}>
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "p-3 rounded-2xl",
+                    pet.stockCount > 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"
                   )}>
-                    {pet.stockCount > 0 ? `${pet.stockCount} Units in Stock` : 'Currently Out of Stock'}
-                  </p>
+                    <Box className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Availability</p>
+                    <p className={cn(
+                      "text-xl font-black",
+                      pet.stockCount > 0 ? "text-green-700" : "text-red-700"
+                    )}>
+                      {pet.stockCount > 0 ? `${pet.stockCount} Units in Stock` : 'Currently Out of Stock'}
+                    </p>
+                  </div>
                 </div>
+                {pet.stockCount > 0 && (
+                  <div className="hidden sm:block">
+                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">
+                      Ready to Ship
+                    </span>
+                  </div>
+                )}
               </div>
+
               {pet.stockCount > 0 && (
-                <div className="hidden sm:block">
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">
-                    Ready to Ship
-                  </span>
-                </div>
+                <button
+                  onClick={handlePurchase}
+                  disabled={isPurchasing}
+                  className={cn(
+                    "w-full py-5 rounded-2xl text-lg font-black transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3",
+                    isPurchasing ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-orange-500 text-white hover:bg-orange-600 shadow-orange-200"
+                  )}
+                >
+                  {isPurchasing ? (
+                    <>
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      Processing Purchase...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-6 h-6" />
+                      Purchase Now
+                    </>
+                  )}
+                </button>
               )}
             </div>
           )}

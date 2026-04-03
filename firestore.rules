@@ -12,8 +12,8 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "gopibutham@gmail.com" && request.auth.token.email_verified == true));
+        ((request.auth.token.email == "gopibutham@gmail.com" && request.auth.token.email_verified == true) ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
     
     function isValidUser(data) {
@@ -33,9 +33,17 @@ service cloud.firestore {
              data.species in ['Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Other'] &&
              data.price is number && data.price >= 0 &&
              data.images is list && data.images.size() > 0 &&
-             data.sellerId == request.auth.uid &&
+             (data.sellerId == request.auth.uid || isAdmin()) &&
              (!('isOfficial' in data) || (data.isOfficial is bool && (data.isOfficial == false || isAdmin()))) &&
              (!('stockCount' in data) || (data.stockCount is int && data.stockCount >= 0));
+    }
+
+    function isValidOrder(data) {
+      let requiredFields = ['id', 'petId', 'petName', 'petImage', 'buyerId', 'buyerName', 'buyerEmail', 'price', 'status', 'createdAt'];
+      return data.keys().hasAll(requiredFields) &&
+             data.buyerId == request.auth.uid &&
+             data.status in ['pending', 'completed', 'cancelled'] &&
+             data.price is number && data.price >= 0;
     }
 
     // User profiles
@@ -51,10 +59,18 @@ service cloud.firestore {
     match /pets/{petId} {
       allow read: if isAuthenticated(); // Restricted to authenticated users
       allow create: if isAuthenticated() && isValidPet(request.resource.data);
-      allow update: if isAdmin() || (isAuthenticated() && 
-                       request.auth.uid == resource.data.sellerId && 
-                       isValidPet(request.resource.data));
+      allow update: if isAdmin() || 
+                       (isAuthenticated() && request.auth.uid == resource.data.sellerId && isValidPet(request.resource.data)) ||
+                       (isAuthenticated() && resource.data.isOfficial == true && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stockCount', 'updatedAt']));
       allow delete: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.sellerId);
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.buyerId == request.auth.uid);
+      allow create: if isAuthenticated() && isValidOrder(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

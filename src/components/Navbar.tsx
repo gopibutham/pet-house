@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { PawPrint, Search, PlusCircle, User, LogOut, Menu, X, Shield } from 'lucide-react';
+import { PawPrint, Search, PlusCircle, User, LogOut, Menu, X, Shield, ShoppingBag } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { auth } from '../firebase';
@@ -35,6 +35,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Browse', href: '/browse', icon: Search },
     { name: 'Sell Pet', href: '/sell', icon: PlusCircle },
+    { name: 'My Purchases', href: '/my-orders', icon: ShoppingBag },
   ];
 
   return (

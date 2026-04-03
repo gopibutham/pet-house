@@ -38,6 +38,24 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "name", "species", "breed", "age", "price", "description", "images", "sellerId", "sellerName", "sellerEmail", "location", "status", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Purchase order information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "petId": { "type": "string" },
+        "petName": { "type": "string" },
+        "petImage": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "buyerName": { "type": "string" },
+        "buyerEmail": { "type": "string" },
+        "price": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "petId", "petName", "petImage", "buyerId", "buyerName", "buyerEmail", "price", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -48,6 +66,10 @@
     "/pets/{petId}": {
       "schema": "Pet",
       "description": "Pet listings"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Purchase orders"
     }
   }
 }

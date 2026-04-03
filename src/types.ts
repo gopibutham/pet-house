@@ -28,4 +28,17 @@ export interface Pet {
   updatedAt: string;
 }
 
+export interface Order {
+  id: string;
+  petId: string;
+  petName: string;
+  petImage: string;
+  buyerId: string;
+  buyerName: string;
+  buyerEmail: string;
+  price: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: string;
+}
+
 export type PetSpecies = 'Dog' | 'Cat' | 'Bird' | 'Fish' | 'Rabbit' | 'Other';

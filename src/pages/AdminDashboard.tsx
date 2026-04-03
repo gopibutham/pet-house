@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, setDoc, doc, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { motion } from 'motion/react';
-import { Users, Shield, Mail, Calendar, User as UserIcon } from 'lucide-react';
+import { Users, Shield, Mail, Calendar, User as UserIcon, Database, Loader2, CheckCircle2 } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
+import { MOCK_PETS } from '../lib/mockData';
+import { toast } from 'sonner';
 
 interface UserProfile {
   uid: string;
@@ -18,6 +20,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   useEffect(() => {
     // Check if current user is admin
@@ -46,6 +49,38 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, []);
 
+  const seedData = async () => {
+    if (!isAdmin) return;
+    setIsSeeding(true);
+    try {
+      const petsCollection = collection(db, 'pets');
+      const existingPets = await getDocs(petsCollection);
+      
+      if (existingPets.size > 0) {
+        if (!window.confirm(`There are already ${existingPets.size} pets in the database. Do you want to add more?`)) {
+          setIsSeeding(false);
+          return;
+        }
+      }
+
+      let count = 0;
+      for (const pet of MOCK_PETS) {
+        // Use the mock ID as the document ID
+        await setDoc(doc(db, 'pets', pet.id), {
+          ...pet,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        count++;
+      }
+      toast.success(`Successfully seeded ${count} pet records!`);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'pets');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   if (!isAdmin && !isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -72,13 +107,29 @@ export default function AdminDashboard() {
           </p>
         </div>
         
-        <div className="bg-orange-50 px-8 py-6 rounded-[2rem] border border-orange-100 flex items-center gap-6">
-          <div className="bg-white p-4 rounded-2xl shadow-sm">
-            <Users className="w-8 h-8 text-orange-600" />
-          </div>
-          <div>
-            <div className="text-3xl font-black text-gray-900">{users.length}</div>
-            <div className="text-sm font-bold text-orange-600 uppercase tracking-wider">Total Users</div>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={seedData}
+            disabled={isSeeding}
+            className="bg-white border-2 border-orange-100 px-8 py-6 rounded-[2rem] flex items-center gap-6 hover:border-orange-500 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+          >
+            <div className="bg-orange-50 p-4 rounded-2xl">
+              {isSeeding ? <Loader2 className="w-8 h-8 text-orange-600 animate-spin" /> : <Database className="w-8 h-8 text-orange-600" />}
+            </div>
+            <div className="text-left">
+              <div className="text-lg font-black text-gray-900">{isSeeding ? 'Seeding...' : 'Seed Pet Data'}</div>
+              <div className="text-sm font-bold text-orange-600 uppercase tracking-wider">Populate Database</div>
+            </div>
+          </button>
+
+          <div className="bg-orange-50 px-8 py-6 rounded-[2rem] border border-orange-100 flex items-center gap-6">
+            <div className="bg-white p-4 rounded-2xl shadow-sm">
+              <Users className="w-8 h-8 text-orange-600" />
+            </div>
+            <div>
+              <div className="text-3xl font-black text-gray-900">{users.length}</div>
+              <div className="text-sm font-bold text-orange-600 uppercase tracking-wider">Total Users</div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Filter, SlidersHorizontal, ChevronDown, X, ShieldCheck } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, ChevronDown, X, ShieldCheck, Database, Loader2 } from 'lucide-react';
 import PetCard from '../components/PetCard';
 import { Pet, PetSpecies } from '../types';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
-import { db } from '../firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+import { collection, onSnapshot, query, orderBy, setDoc, doc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 import { useSearchParams } from 'react-router-dom';
+import { MOCK_PETS } from '../lib/mockData';
+import { toast } from 'sonner';
 
 const SPECIES: PetSpecies[] = ['Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Other'];
 
@@ -17,11 +19,14 @@ export default function Browse() {
 
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecies, setSelectedSpecies] = useState<PetSpecies | 'All'>('All');
   const [selectedType, setSelectedType] = useState<'All' | 'Official' | 'Community'>(initialType);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [showFilters, setShowFilters] = useState(false);
+
+  const isAdmin = auth.currentUser?.email === 'gopibutham@gmail.com';
 
   useEffect(() => {
     if (searchParams.get('type') === 'official') {
@@ -45,6 +50,27 @@ export default function Browse() {
 
     return () => unsubscribe();
   }, []);
+
+  const seedData = async () => {
+    if (!isAdmin) return;
+    setIsSeeding(true);
+    try {
+      let count = 0;
+      for (const pet of MOCK_PETS) {
+        await setDoc(doc(db, 'pets', pet.id), {
+          ...pet,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        count++;
+      }
+      toast.success(`Successfully seeded ${count} pet records!`);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'pets');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   const filteredPets = useMemo(() => {
     return pets.filter((pet) => {
@@ -243,16 +269,30 @@ export default function Browse() {
                 Try adjusting your search or filters to find what you're looking for.
               </p>
             </div>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedSpecies('All');
-                setPriceRange([0, 5000]);
-              }}
-              className="text-orange-600 font-bold hover:underline"
-            >
-              Clear all filters
-            </button>
+            
+            <div className="flex flex-col items-center gap-4">
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedSpecies('All');
+                  setPriceRange([0, 5000]);
+                }}
+                className="text-orange-600 font-bold hover:underline"
+              >
+                Clear all filters
+              </button>
+
+              {isAdmin && pets.length === 0 && (
+                <button
+                  onClick={seedData}
+                  disabled={isSeeding}
+                  className="flex items-center gap-2 bg-orange-500 text-white px-8 py-4 rounded-2xl font-bold hover:bg-orange-600 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                >
+                  {isSeeding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Database className="w-5 h-5" />}
+                  {isSeeding ? 'Seeding Database...' : 'Seed Database with Mock Data'}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

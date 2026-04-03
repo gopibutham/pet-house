@@ -9,6 +9,7 @@ import SellPet from './pages/SellPet';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
+import MyOrders from './pages/MyOrders';
 import AuthGuard from './components/AuthGuard';
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
               <Route path="/pet/:id" element={<PetDetail />} />
               <Route path="/sell" element={<SellPet />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/my-orders" element={<MyOrders />} />
               <Route path="/login" element={<Login />} />
               <Route path="/admin" element={<AdminDashboard />} />
             </Routes>
