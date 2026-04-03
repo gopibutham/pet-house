@@ -34,7 +34,8 @@ service cloud.firestore {
              data.price is number && data.price >= 0 &&
              data.images is list && data.images.size() > 0 &&
              data.sellerId == request.auth.uid &&
-             (!('isOfficial' in data) || (data.isOfficial is bool && (data.isOfficial == false || isAdmin())));
+             (!('isOfficial' in data) || (data.isOfficial is bool && (data.isOfficial == false || isAdmin()))) &&
+             (!('stockCount' in data) || (data.stockCount is int && data.stockCount >= 0));
     }
 
     // User profiles

@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, DollarSign, Heart, Share2, Mail, Phone, ChevronLeft, ShieldCheck, Info, Loader2 } from 'lucide-react';
+import { MapPin, Calendar, DollarSign, Heart, Share2, Mail, Phone, ChevronLeft, ShieldCheck, Info, Loader2, Box } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -151,6 +151,38 @@ export default function PetDetail() {
               </p>
             </div>
           </div>
+
+          {pet.isOfficial && pet.stockCount !== undefined && (
+            <div className={cn(
+              "p-6 rounded-3xl border flex items-center justify-between",
+              pet.stockCount > 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"
+            )}>
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  "p-3 rounded-2xl",
+                  pet.stockCount > 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"
+                )}>
+                  <Box className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Availability</p>
+                  <p className={cn(
+                    "text-xl font-black",
+                    pet.stockCount > 0 ? "text-green-700" : "text-red-700"
+                  )}>
+                    {pet.stockCount > 0 ? `${pet.stockCount} Units in Stock` : 'Currently Out of Stock'}
+                  </p>
+                </div>
+              </div>
+              {pet.stockCount > 0 && (
+                <div className="hidden sm:block">
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">
+                    Ready to Ship
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4">
             <h3 className="text-xl font-black text-gray-900">About {pet.name}</h3>

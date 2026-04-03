@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Calendar, DollarSign, Heart, ShieldCheck } from 'lucide-react';
+import { MapPin, Calendar, DollarSign, Heart, ShieldCheck, Box } from 'lucide-react';
 import { Pet } from '../types';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
@@ -34,10 +34,21 @@ const PetCard: React.FC<PetCardProps> = ({ pet }) => {
           {pet.isOfficial && (
             <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-sm uppercase tracking-widest flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" />
-              Official
+              Official Stock
             </span>
           )}
         </div>
+        {pet.isOfficial && pet.stockCount !== undefined && (
+          <div className="absolute bottom-4 left-4">
+            <span className={cn(
+              "px-3 py-1 rounded-full text-[10px] font-black shadow-sm uppercase tracking-widest flex items-center gap-1 backdrop-blur-md border",
+              pet.stockCount > 0 ? "bg-green-500/80 text-white border-green-400" : "bg-red-500/80 text-white border-red-400"
+            )}>
+              <Box className="w-3 h-3" />
+              {pet.stockCount > 0 ? `In Stock: ${pet.stockCount}` : 'Out of Stock'}
+            </span>
+          </div>
+        )}
         <button 
           className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-red-500 transition-all duration-300 border border-white/30"
           onClick={(e) => {

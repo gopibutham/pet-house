@@ -23,6 +23,7 @@ export interface Pet {
   location: string;
   status: 'available' | 'sold';
   isOfficial?: boolean;
+  stockCount?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { PawPrint, Upload, DollarSign, MapPin, Info, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { PawPrint, Upload, DollarSign, MapPin, Info, CheckCircle2, AlertCircle, ShieldCheck, Box } from 'lucide-react';
 import { PetSpecies } from '../types';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
@@ -21,6 +21,7 @@ const petSchema = z.object({
   location: z.string().min(2, 'Location is required'),
   description: z.string().min(20, 'Description must be at least 20 characters'),
   isOfficial: z.boolean().optional(),
+  stockCount: z.number().min(0, 'Stock must be at least 0').optional(),
 });
 
 type PetFormValues = z.infer<typeof petSchema>;
@@ -263,20 +264,42 @@ export default function SellPet() {
         </div>
 
         {isAdmin && (
-          <div className="p-6 bg-orange-50 rounded-3xl border-2 border-orange-100 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-orange-500 p-3 rounded-2xl">
-                <ShieldCheck className="w-6 h-6 text-white" />
+          <div className="space-y-6">
+            <div className="p-6 bg-orange-50 rounded-3xl border-2 border-orange-100 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-orange-500 p-3 rounded-2xl">
+                  <ShieldCheck className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-black text-gray-900">PetConnect Exclusive</h4>
+                  <p className="text-sm text-gray-500">Mark this as an official platform listing.</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-black text-gray-900">PetConnect Exclusive</h4>
-                <p className="text-sm text-gray-500">Mark this as an official platform listing.</p>
-              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" {...register('isOfficial')} className="sr-only peer" />
+                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
+              </label>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" {...register('isOfficial')} className="sr-only peer" />
-              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
-            </label>
+
+            {isOfficialChecked && (
+              <div className="p-6 bg-green-50 rounded-3xl border-2 border-green-100 space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="bg-green-500 p-3 rounded-2xl">
+                    <Box className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-gray-900">Stock Availability</h4>
+                    <p className="text-sm text-gray-500">How many units are available in our stock?</p>
+                  </div>
+                </div>
+                <input
+                  type="number"
+                  {...register('stockCount', { valueAsNumber: true })}
+                  className="w-full px-6 py-4 rounded-2xl border-2 border-green-200 bg-white outline-none focus:border-green-500 transition-all font-bold"
+                  placeholder="Enter stock quantity"
+                />
+              </div>
+            )}
           </div>
         )}
 
